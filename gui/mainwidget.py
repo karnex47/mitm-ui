@@ -101,7 +101,11 @@ class MainGui(QtWidgets.QWidget):
     def terminate(self):
         self.save_state()
         self.controllerThread.terminate()
-        self.controllerThread.join()
+        if self.controllerThread.isAlive():
+            try:
+                self.controllerThread.join()
+            except:
+                pass
 
     def save_state(self, path=None):
         print path
