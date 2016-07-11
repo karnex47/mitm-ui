@@ -60,6 +60,7 @@ class ControllerMaster(flow.FlowMaster):
 class ControllerState(flow.State, QtCore.QObject):
     updateList = QtCore.pyqtSignal(int, str)
     searchChanged = QtCore.pyqtSignal()
+    stateUpdated = QtCore.pyqtSignal()
 
     def __init__(self):
         flow.State.__init__(self)
@@ -71,6 +72,7 @@ class ControllerState(flow.State, QtCore.QObject):
     def set_data_from_saved_state(self, saved_sate):
         self._auto_respond = saved_sate['auto_response']
         self._replay = saved_sate['replay']
+        self.stateUpdated.emit()
 
     def add_request(self, f):
         ret = flow.State.add_request(self, f)

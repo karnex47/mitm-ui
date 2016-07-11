@@ -32,10 +32,8 @@ class ControllerThread(Thread):
 class MainGui(QtWidgets.QWidget):
     def __init__(self, server, options, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
-        prev_instatnce_state = self.load_state()
         self.state = ControllerState()
-        if prev_instatnce_state:
-            self.state.set_data_from_saved_state(prev_instatnce_state)
+        self.load_state()
         self.flow_list = FlowList(self.state)
         self.actions_view = ActionsView(self.state)
         self.show_main_widget(server, options)
@@ -90,7 +88,8 @@ class MainGui(QtWidgets.QWidget):
             f = open(path, 'rb')
             data = load(f)
             f.close()
-            return data
+            if data:
+                self.state.set_data_from_saved_state(data)
         except UnpicklingError:
             print 'Error loading data file, falling back to empty state'
             return None
@@ -108,7 +107,6 @@ class MainGui(QtWidgets.QWidget):
                 pass
 
     def save_state(self, path=None):
-        print path
         if not path:
             path = resource_path('data')
         state_data = {}

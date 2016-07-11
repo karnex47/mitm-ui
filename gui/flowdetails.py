@@ -87,6 +87,7 @@ class HeaderDetails(QtWidgets.QListWidget):
             self.itemDoubleClicked.connect(self.editItem)
             self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
             self.customContextMenuRequested.connect(self.show_context_menu)
+            self.setSelectionMode(QtWidgets.QListWidget.ExtendedSelection)
         for key, value in conn.headers:
             item = QtWidgets.QListWidgetItem(str(key)+': '+str(value))
             if editable:
@@ -117,7 +118,10 @@ class HeaderDetails(QtWidgets.QListWidget):
         self.listMenu.show()
 
     def remove_header(self):
-        self.takeItem(self.currentRow())
+        indexs = [index.row() for index in self.selectedIndexes()]
+        indexs.sort(reverse=True)
+        for index in indexs:
+            self.takeItem(index)
 
 
 class ContentDetails(QtWidgets.QTextEdit):

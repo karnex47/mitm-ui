@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from flowdetails import FlowDetails
 import copy, re, os, urllib2
+from urllib2 import HTTPError
 
 class AutoResponder(QtWidgets.QWidget):
     def __init__(self, state):
@@ -14,17 +15,11 @@ class AutoResponder(QtWidgets.QWidget):
         layout.addStretch(1)
 
         self.model = CustomStandardListModel()
-        for key in self.state.get_auto_response_keys():
-            list_item = QtGui.QStandardItem(key)
-            list_item.setCheckable(True)
-            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemIsEditable)
-            if self.state.get_auto_response_data(key)['active']:
-                list_item.setCheckState(2)
-            else:
-                list_item.setCheckState(0)
-            self.model.appendRow(list_item)
+        self.set_items_from_state()
+        self.state.stateUpdated.connect(self.set_items_from_state)
         self.model.onItemChange.connect(self.on_list_item_change)
         self.response_list = QtWidgets.QListView()
+        self.response_list.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
         self.response_list.setModel(self.model)
         self.response_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.response_list.clicked.connect(self.set_stored_file_path)
@@ -39,6 +34,17 @@ class AutoResponder(QtWidgets.QWidget):
         layout.setStretchFactor(self.response_list, 99)
         layout.setStretchFactor(self.file_selector, 1)
         self.setLayout(layout)
+
+    def set_items_from_state(self):
+        for key in self.state.get_auto_response_keys():
+            list_item = QtGui.QStandardItem(key)
+            list_item.setCheckable(True)
+            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemIsEditable)
+            if self.state.get_auto_response_data(key)['active']:
+                list_item.setCheckState(2)
+            else:
+                list_item.setCheckState(0)
+            self.model.appendRow(list_item)
 
     def add_auto_response_flow(self, f):
         url = f.request.url
@@ -69,14 +75,15 @@ class AutoResponder(QtWidgets.QWidget):
         
     def show_context_menu(self, QPos):
         self.listMenu = QtWidgets.QMenu()
-        edit_response = self.listMenu.addAction("Edit Response")
-        edit_response.triggered.connect(self.edit_response_clicked)
+        if not len(self.response_list.selectedIndexes()) > 1:
+            edit_response = self.listMenu.addAction("Edit Response")
+            edit_response.triggered.connect(self.edit_response_clicked)
+            escape = self.listMenu.addAction("Escape URL")
+            escape.triggered.connect(self.escape_url)
+            unescape = self.listMenu.addAction("Unescape URL")
+            unescape.triggered.connect(self.unescape_url)
         remove_response = self.listMenu.addAction("Remove Response")
         remove_response.triggered.connect(self.remove_response_clicked)
-        escape = self.listMenu.addAction("Escape URL")
-        escape.triggered.connect(self.escape_url)
-        unescape = self.listMenu.addAction("Unescape URL")
-        unescape.triggered.connect(self.unescape_url)
 
         key = str(self.model.itemFromIndex(self.response_list.currentIndex()).text())
         current_match_type = self.state.get_match_type(key)
@@ -106,20 +113,23 @@ class AutoResponder(QtWidgets.QWidget):
         self.state.set_auto_response(key, response)
 
     def remove_response_clicked(self):
-        index = self.response_list.currentIndex()
-        key = str(self.model.itemFromIndex(index).text())
-        self.model.removeRow(index.row())
-        self.state.remove_auto_response(key)
+        indexs = self.response_list.selectedIndexes()
+        indexs.sort(key=lambda x: x.row(), reverse=True)
+        for index in indexs:
+            key = str(self.model.itemFromIndex(index).text())
+            self.model.removeRow(index.row())
+            self.state.remove_auto_response(key)
 
     def set_match_type(self, action):
-        item = self.model.itemFromIndex(self.response_list.currentIndex())
-        key = str(item.text())
-        value = str(action.text()).split(':')[1].strip()
-        self.state.set_match_type(key, value)
-        if value == 'REGEX':
-            self.escape_url(item)
-        else:
-            self.unescape_url(item)
+        for index in self.response_list.selectedIndexes():
+            item = self.model.itemFromIndex(index)
+            key = str(item.text())
+            value = str(action.text()).split(':')[1].strip()
+            self.state.set_match_type(key, value)
+            if value == 'REGEX':
+                self.escape_url(item)
+            else:
+                self.unescape_url(item)
 
     def escape_url(self, item=None):
         if not item:
@@ -161,8 +171,10 @@ class AutoResponder(QtWidgets.QWidget):
                 if response.headers.get_first('content-encoding'):
                     response.encode(self.conn.headers.get_first('content-encoding'))
                 self.state.set_auto_response(key, response)
-        except IOError, HTTPError:
-            show_dialog("Cannot read file")
+        except IOError, e:
+            show_dialog("Cannot read file\n%s"%(e.message, ))
+        except HTTPError, e:
+            show_dialog("Cannot read from url %s\n%s"%(file_path, e.message))
 
 
 class CustomStandardListModel(QtGui.QStandardItemModel):

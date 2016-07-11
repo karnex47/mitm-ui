@@ -2,7 +2,7 @@
 echo "cleaning up directory"
 rm -rf build dist
 echo "building app"
-pyinstaller --windowed MitmUI.py
+pyinstaller --windowed MitmUI.py --icon=app.icns
 echo "copying required files"
 cp -a assets ./dist/MitmUI.app/Contents/MacOS/
 cp config.ini ./dist/MitmUI.app/Contents/MacOS/

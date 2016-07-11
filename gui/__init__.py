@@ -4,7 +4,6 @@ from mainwidget import MainGui
 from libmproxy.proxy.server import ProxyServer
 from config import AppConfig, resource_path
 from settingsview import SettingsDialog
-from importexportview import ImportExportDialog
 
 appStyle = """
 QToolBar {{background: black}}
@@ -36,8 +35,10 @@ class MainWindow(QMainWindow):
         search_field.textChanged.connect(self.ui.search_changed)
         add_cert = QtWidgets.QAction(QtGui.QIcon(resource_path('assets/cert-icon.png')), "Install certificate (opens 'mitmcert.it')", self)
         add_cert.triggered.connect(self.open_browser_to_cert)
-        import_export_action = QtWidgets.QAction(QtGui.QIcon(resource_path('assets/import-export-icon.png')), "Import/export state from/to file", self)
-        import_export_action.triggered.connect(self.show_import_export)
+        import_action = QtWidgets.QAction(QtGui.QIcon(resource_path('assets/import-icon.png')), "Import state from file", self)
+        import_action.triggered.connect(lambda :self.show_import_export(False))
+        export_action = QtWidgets.QAction(QtGui.QIcon(resource_path('assets/export-icon.png')), "Export state to file", self)
+        export_action.triggered.connect(lambda :self.show_import_export(True))
         toolbar.addAction(clear_action)
         toolbar.addAction(self.server_control_action)
         toolbar.addAction(settings_action)
@@ -45,7 +46,8 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(QtWidgets.QLabel("Filter:"))
         toolbar.addWidget(search_field)
         toolbar.addSeparator()
-        toolbar.addAction(import_export_action)
+        toolbar.addAction(import_action)
+        toolbar.addAction(export_action)
         toolbar.addAction(add_cert)
         toolbar.setMovable(False)
         self.setStyleSheet(appStyle)
@@ -92,8 +94,18 @@ class MainWindow(QMainWindow):
     def onSettingsClose(self, isSettingsChanged):
         print isSettingsChanged
 
-    def show_import_export(self):
-        ImportExportDialog(self.ui.load_state, self.ui.save_state)
+    def show_import_export(self, save):
+        fileDialog = QtWidgets.QFileDialog()
+        if save:
+            fileDialog.setAcceptMode(fileDialog.AcceptSave)
+        fileDialog.fileSelected.connect(lambda path: self.handle_import_export(path, save))
+        fileDialog.exec_()
+
+    def handle_import_export(self, path, save):
+        if save:
+            self.ui.save_state(path)
+        else:
+            self.ui.load_state(path)
 
     def open_browser_to_cert(self):
         import webbrowser

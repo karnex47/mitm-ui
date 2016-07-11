@@ -29,7 +29,7 @@ def main(argv):
     options = None
     app = QApplication(sys.argv)
     ui = MainWindow(options)
-    ui.setWindowTitle('MitmUI beta')
+    ui.setWindowTitle('MitmUI v0.1')
     ui.show()
     sys.exit(app.exec_())
 
