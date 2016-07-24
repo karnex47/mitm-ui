@@ -228,8 +228,10 @@ class AuthenticationSettings(QtWidgets.QWidget):
         data.update(self.apacheConfig.getData())
         return data
 
+
 class SingleUserConfig(QtWidgets.QWidget):
     enabled = False
+
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         config = AppConfig.Instance().getConfig()
@@ -243,7 +245,6 @@ class SingleUserConfig(QtWidgets.QWidget):
         layout = QtWidgets.QGridLayout()
         enable_checkbox = QtWidgets.QCheckBox("Allows access to a single user")
         enable_checkbox.stateChanged.connect(self.setAuthenticationEnabled)
-        enable_checkbox.setCheckState(2 if self.enabled else 0)
         layout.addWidget(enable_checkbox, 0, 0, 1, 2)
         layout.addWidget(QtWidgets.QLabel("Username"), 1, 0)
         self.user_name = QtWidgets.QLineEdit(user_name)
@@ -254,6 +255,7 @@ class SingleUserConfig(QtWidgets.QWidget):
         self.password.setEchoMode(QtWidgets.QLineEdit.Password)
         self.password.setEnabled(self.enabled)
         layout.addWidget(self.password, 2, 1)
+        enable_checkbox.setCheckState(2 if self.enabled else 0)
         layout.setContentsMargins(0, 11, 0, 11)
         self.setLayout(layout)
 

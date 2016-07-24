@@ -79,7 +79,7 @@ class FlowListItemDelegate(QtWidgets.QStyledItemDelegate):
                '<span>{1}</span>' \
                '<span class="spacer">  </span>' \
                '<span"><strong>{2}</strong></span>' \
-               '<span class="space"r>  </span>' \
+               '<span class="spacer">  </span>' \
                '<span>{3}</span>' \
                '</div>'
         style = 'color: black;'
@@ -90,6 +90,8 @@ class FlowListItemDelegate(QtWidgets.QStyledItemDelegate):
             style = 'color: red;'
         if f.response:
             code = f.response.code
+            color = 'green' if 200 <= code <= 299 else 'purple' if 300 <= code <= 399 else 'red' if code >= 400 else 'black'
+            code = '<span style="color: %s">%d</span>'%(color, code)
         if highlight:
             style += "background: yellow;"
         return html.format(style, code, f.request.method, f.request.url)
@@ -122,7 +124,6 @@ class FlowList(QtWidgets.QListView):
     def show_flow_details(self):
         f = self.model.getFlowData(self.currentIndex())
         DetailsView(f)
-
 
     def show_context_menu(self, QPos):
         self.listMenu = QtWidgets.QMenu()

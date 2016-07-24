@@ -3,6 +3,7 @@ from flowdetails import FlowDetails
 import copy, re, os, urllib2
 from urllib2 import HTTPError
 
+
 class AutoResponder(QtWidgets.QWidget):
     def __init__(self, state):
         QtWidgets.QWidget.__init__(self)
@@ -72,7 +73,6 @@ class AutoResponder(QtWidgets.QWidget):
         if not oldItem.checkState() == newItem.checkState():
             self.state.set_auto_response_active(str(newItem.text()), newItem.checkState())
 
-        
     def show_context_menu(self, QPos):
         self.listMenu = QtWidgets.QMenu()
         if not len(self.response_list.selectedIndexes()) > 1:
@@ -242,7 +242,6 @@ class EditResponseDialog(QtWidgets.QDialog):
         self.exec_()
 
     def on_save(self, response):
-        print response
         self.callback(self.key, response)
 
 
